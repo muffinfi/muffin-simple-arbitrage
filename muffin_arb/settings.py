@@ -91,6 +91,7 @@ if NETWORK == 'mainnet':
     TOKEN_ADDRESSES = [
         ETH_ADDRESS,
         USDC_ADDRESS,
+        '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',  # WBTC
     ]
 
 elif NETWORK == 'goerli':
