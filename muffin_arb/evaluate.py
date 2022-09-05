@@ -131,36 +131,3 @@ class EvaluationResult:
     gas_cost:       int
     gas_cost_wei:   int
     profit:         int
-
-
-# ****************************************************************************
-
-
-# def guess_tier_choices(
-#     market1: Market,
-#     market2: Market,
-#     is_token0_in: bool,
-#     is_market1_muffin: bool,
-#     tier_count: int,
-#     token0: Token,
-#     token1: Token,
-#     market1_kwargs: dict[str, Any],
-#     market2_kwargs: dict[str, Any]
-# ):
-#     @lru_cache(maxsize=None)
-#     def arbitrage(amt_a1: int, tier_choices: np.ndarray):
-#         _kwargs1 = {**market1_kwargs, 'tier_choices': tier_choices} if is_market1_muffin else market1_kwargs
-#         _kwargs2 = {**market2_kwargs, 'tier_choices': tier_choices} if not is_market1_muffin else market2_kwargs
-#         amt_b = market1.quote(is_token0_in, amt_a1, **_kwargs1) * -1
-#         amt_a2 = market2.quote(not is_token0_in, amt_b, **_kwargs2) * -1
-#         return (amt_a2-amt_a1, amt_b, amt_a2)
-
-#     token_in = token0 if is_token0_in else token1
-#     amt_in = max(1000, token_in.unit // 10**6)
-
-#     tier_choices = np.full(tier_count, False)
-#     for i in range(len(tier_choices)):
-#         tc = np.asarray([i == j for j in range(len(tier_choices))])
-#         tier_choices[i] = arbitrage(amt_in, tc)[0] > 0
-
-#     return tier_choices

@@ -14,10 +14,6 @@ from muffin_arb.token import Token
 from muffin_arb.utils.logging import print_optim_result_detail, print_optim_result_brief
 
 
-# def get_all_addr_pairs() -> list[tuple[str, str]]:
-#     return list(itertools.combinations(sorted(TOKEN_ADDRESSES, key=str.lower), 2))
-
-
 def get_eth_addr_pairs() -> list[tuple[str, str]]:
     """
     Return a list of (address, address) which involes eth
