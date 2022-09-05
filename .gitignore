@@ -195,8 +195,8 @@ cython_debug/
 #.idea/
 
 # foundry
-muffin_arb_contracts/out/
-muffin_arb_contracts/cache/
+muffin_arb_contracts/out
+muffin_arb_contracts/cache
 
 # Miscellaneous
 .env.production
