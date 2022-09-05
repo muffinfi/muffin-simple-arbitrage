@@ -75,7 +75,7 @@ def evaluate_arb(
     """
     Step 1. Test if there is arb opportunity.
     """
-    test_amt_in = max(token_in.unit // 10**6, 1000)
+    test_amt_in = max(token_in.unit // 10**4, 1000)
     test_amt_net = arbitrage(test_amt_in)[0]
     if test_amt_net <= 0:
         raise EvaluationFailure(f'Not profitable ({test_amt_net})')
@@ -92,7 +92,7 @@ def evaluate_arb(
     We'll `eth_estimateGas` and calculate fee more precisely later on, but here we still want to roughly estimate gas
     to reject any seemingly non-profitable arbs, so we don't waste time handling them later on.
     """
-    GAS_PER_ARB = 200_000
+    GAS_PER_ARB = 190_000
     gas_cost_wei = GAS_PER_ARB * gas_price
     if token_in.address == ETH_ADDRESS:
         gas_cost = gas_cost_wei
@@ -103,7 +103,7 @@ def evaluate_arb(
 
     profit = amt_net - gas_cost
     if profit <= 0:
-        raise EvaluationFailure(f'Negative profit: {profit} ({amt_in} -> {amt_bridge} -> {amt_out})')
+        raise EvaluationFailure(f'Negative profit: {profit} ({amt_net} - {gas_cost})')
 
     return EvaluationResult(
         market1, market2, token_in, token_bridge, market1_kwargs, market2_kwargs,  # inputs
