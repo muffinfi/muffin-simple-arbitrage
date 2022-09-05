@@ -1,0 +1,775 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ILens",
+  "sourceName": "contracts/interfaces/lens/ILens.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getDerivedPosition",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint8",
+              "name": "tierId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickLower",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickUpper",
+              "type": "int24"
+            }
+          ],
+          "internalType": "struct IPositionLens.PositionInfo",
+          "name": "info",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint96",
+              "name": "liquidityD8",
+              "type": "uint96"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside0Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside1Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint8",
+              "name": "limitOrderType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint32",
+              "name": "settlementSnapshotId",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct Positions.Position",
+          "name": "position",
+          "type": "tuple"
+        },
+        {
+          "internalType": "bool",
+          "name": "settled",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeAmount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeAmount1",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint8",
+              "name": "tierId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickLower",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickUpper",
+              "type": "int24"
+            }
+          ],
+          "internalType": "struct IPositionLens.PositionInfo",
+          "name": "info",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint96",
+              "name": "liquidityD8",
+              "type": "uint96"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside0Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside1Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint8",
+              "name": "limitOrderType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint32",
+              "name": "settlementSnapshotId",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct Positions.Position",
+          "name": "position",
+          "type": "tuple"
+        }
+      ],
+      "name": "getFeeAmounts",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "feeAmount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeAmount1",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token0",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "token1",
+          "type": "address"
+        }
+      ],
+      "name": "getPoolId",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPosition",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint8",
+              "name": "tierId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickLower",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickUpper",
+              "type": "int24"
+            }
+          ],
+          "internalType": "struct IPositionLens.PositionInfo",
+          "name": "info",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint96",
+              "name": "liquidityD8",
+              "type": "uint96"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside0Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside1Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint8",
+              "name": "limitOrderType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint32",
+              "name": "settlementSnapshotId",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct Positions.Position",
+          "name": "position",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "poolId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint8",
+          "name": "tierId",
+          "type": "uint8"
+        },
+        {
+          "internalType": "int24",
+          "name": "tickStart",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "tickEnd",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint24",
+          "name": "maxCount",
+          "type": "uint24"
+        }
+      ],
+      "name": "getTicks",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "count",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "ticks",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint8",
+              "name": "tierId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickLower",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickUpper",
+              "type": "int24"
+            }
+          ],
+          "internalType": "struct IPositionLens.PositionInfo",
+          "name": "info",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint96",
+              "name": "liquidityD8",
+              "type": "uint96"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside0Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside1Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint8",
+              "name": "limitOrderType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint32",
+              "name": "settlementSnapshotId",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct Positions.Position",
+          "name": "position",
+          "type": "tuple"
+        },
+        {
+          "internalType": "bool",
+          "name": "settled",
+          "type": "bool"
+        }
+      ],
+      "name": "getUnderlyingAmounts",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amount0",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount1",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "hub",
+      "outputs": [
+        {
+          "internalType": "contract IMuffinHubCombined",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token0",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "token1",
+              "type": "address"
+            },
+            {
+              "internalType": "uint8",
+              "name": "tierId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickLower",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickUpper",
+              "type": "int24"
+            }
+          ],
+          "internalType": "struct IPositionLens.PositionInfo",
+          "name": "info",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint96",
+              "name": "liquidityD8",
+              "type": "uint96"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside0Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint80",
+              "name": "feeGrowthInside1Last",
+              "type": "uint80"
+            },
+            {
+              "internalType": "uint8",
+              "name": "limitOrderType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint32",
+              "name": "settlementSnapshotId",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct Positions.Position",
+          "name": "position",
+          "type": "tuple"
+        }
+      ],
+      "name": "isSettled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "settled",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "manager",
+      "outputs": [
+        {
+          "internalType": "contract IPositionManager",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "path",
+          "type": "bytes"
+        },
+        {
+          "internalType": "int256",
+          "name": "amountDesired",
+          "type": "int256"
+        }
+      ],
+      "name": "quote",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "gasUsed",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenIn",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenOut",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tierChoices",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "amountDesired",
+          "type": "int256"
+        }
+      ],
+      "name": "quoteSingle",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "gasUsed",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "path",
+          "type": "bytes"
+        },
+        {
+          "internalType": "int256",
+          "name": "amountDesired",
+          "type": "int256"
+        }
+      ],
+      "name": "simulate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "protocolFeeAmt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierAmountsIn",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierAmountsOut",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierData",
+              "type": "uint256[]"
+            }
+          ],
+          "internalType": "struct IQuoter.Hop[]",
+          "name": "hops",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenIn",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "tokenOut",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tierChoices",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "amountDesired",
+          "type": "int256"
+        }
+      ],
+      "name": "simulateSingle",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "protocolFeeAmt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierAmountsIn",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierAmountsOut",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "tierData",
+              "type": "uint256[]"
+            }
+          ],
+          "internalType": "struct IQuoter.Hop",
+          "name": "hop",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
