@@ -23,7 +23,7 @@ class Env:
 
     @classmethod
     def get_env_nullable(cls, key: str):
-        return os.environ.get('key', cls._env_prod.get(key, cls._env.get('key', None)))
+        return os.environ.get(key, cls._env_prod.get(key, cls._env.get(key, None)))
 
     @classmethod
     def get_env(cls, key: str) -> str:
