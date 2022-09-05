@@ -39,7 +39,7 @@ def run_once():
     # form token pairs with eth
     addr_pairs = get_eth_addr_pairs()
     pairs = [(token_map[addr0], token_map[addr1]) for addr0, addr1 in addr_pairs]
-    pprint(list(addr_pairs))
+    # pprint(list(addr_pairs))
 
     # load all pool data
     muffin_pools = MuffinPool.from_pairs(pairs)
@@ -48,12 +48,14 @@ def run_once():
 
     # get current base fee per gas
     pending_block = w3.eth.get_block('pending')
-    assert 'baseFeePerGas' in pending_block
+    assert 'baseFeePerGas' in pending_block and 'number' in pending_block
 
     # find all arb opportunities
     results: list[EvaluationResult] = []
     for muffin, univ2 in market_pairs:
-        print_pool_prices(muffin, univ2)
+        # for every 20 blocks, print all pool prices for records
+        if pending_block['number'] % 20 == 0:
+            print_pool_prices(muffin, univ2)
 
         # determine input token and bridge token
         token0, token1 = muffin.token0, muffin.token1
