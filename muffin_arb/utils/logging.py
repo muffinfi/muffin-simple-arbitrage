@@ -6,6 +6,7 @@ from muffin_arb.token import Token
 from muffin_arb.utils.color import Color
 from web3.datastructures import AttributeDict
 from pprint import pprint
+from tabulate import tabulate
 
 
 def print_optim_result_brief(res: EvaluationResult):
@@ -171,3 +172,79 @@ def pprint_attr_dict(x, omit_keys: list[Any] = []):
 
 def omit(x: Union[dict, TypedDict], keys: list[Any] = []):
     return {k: v for k, v in x.items() if k not in keys}
+
+
+# -----
+
+
+def get_univ2_price(market: UniV2Pool, invert_price: bool) -> float:
+    return invert((market.reserve1/market.token1.unit) / (market.reserve0/market.token0.unit), invert_price)
+
+
+def format_price_diff(price: float, ref_price: float) -> str:
+    pct = (price - ref_price) / ref_price
+    return f'{pct or 0:+.4%}'
+
+
+def print_pool_prices(market1: Market, market2: Market):
+    # determine base and quote tokens
+    if isinstance(market1, (MuffinPool, UniV2Pool)):
+        token0, token1 = market1.token0, market1.token1
+    elif isinstance(market2, (MuffinPool, UniV2Pool)):
+        token0, token1 = market2.token0, market2.token1
+    else:
+        raise Exception('Cannot determine tokens')
+
+    invert_price = False
+    for quote in ['USDC', 'DAI', 'USDT', 'WETH', 'tETH']:
+        if token0.symbol == quote or token1.symbol == quote:
+            invert_price = token0.symbol == quote
+            break
+    base, quote = (token1, token0) if invert_price else (token0, token1)
+
+    # use univ2 pool as the reference price
+    if isinstance(market1, UniV2Pool):
+        univ2 = market1
+    elif isinstance(market2, UniV2Pool):
+        univ2 = market2
+    else:
+        raise Exception('Missing control price')
+    ref_price = get_univ2_price(univ2, invert_price)
+
+    # initialize table data
+    headers = ['', f'{quote.symbol} / {base.symbol}', '', 'fee', 'liquidity', 'tick↓', 'tick↑', 'sqrt price']
+    rows = []
+
+    def append_univ2(mkt: UniV2Pool):
+        price = get_univ2_price(mkt, invert_price)
+        rows.append(['UniV2', format_price(price), format_price_diff(price, ref_price), None, None, None, None, None])
+
+    def append_muffin(mkt: MuffinPool):
+        prices = invert(sqrt_price_x72_to_price_float(mkt.impl.sqrt_prices, token0.unit, token1.unit), invert_price)
+        liquiditys = mkt.impl.liquiditys / np.sqrt(float(token0.unit) * token1.unit)
+        fees = np.round(((10**10 - (mkt.impl.sqrt_gammas ** 2)) * 10000 / 10**10).astype(float), 1)
+        for i, price in enumerate(prices):
+            rows.append([
+                f'Muffin tier #{i}',
+                format_price(price),
+                format_price_diff(price, ref_price),
+                fees[i],
+                liquiditys[i],
+                mkt.impl.next_ticks_below[i],
+                mkt.impl.next_ticks_above[i],
+                mkt.impl.sqrt_prices[i],
+            ])
+
+    # append univ2 pool first
+    for m in [market1, market2]:
+        if isinstance(m, UniV2Pool):
+            append_univ2(m)
+
+    # append muffin tier data
+    for m in [market1, market2]:
+        if isinstance(m, MuffinPool):
+            append_muffin(m)
+
+    print(Color.CYELLOW)
+    print(tabulate(rows, headers=headers, numalign='left', floatfmt='.8g', tablefmt="github"))
+    print(Color.CEND)

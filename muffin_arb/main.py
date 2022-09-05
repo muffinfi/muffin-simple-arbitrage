@@ -11,7 +11,7 @@ from muffin_arb.market import Market, MuffinPool, UniV2Pool
 from muffin_arb.evaluate import EvaluationFailure, EvaluationResult, evaluate_arb
 from muffin_arb.settings import ETH_ADDRESS, TOKEN_ADDRESSES, WEBSOCKET_PROVIDER_URI, w3
 from muffin_arb.token import Token
-from muffin_arb.utils.logging import print_optim_result_detail, print_optim_result_brief
+from muffin_arb.utils.logging import print_optim_result_detail, print_optim_result_brief, print_pool_prices
 
 
 def get_eth_addr_pairs() -> list[tuple[str, str]]:
@@ -53,6 +53,7 @@ def run_once():
     # find all arb opportunities
     results: list[EvaluationResult] = []
     for muffin, univ2 in market_pairs:
+        print_pool_prices(muffin, univ2)
 
         # determine input token and bridge token
         token0, token1 = muffin.token0, muffin.token1
