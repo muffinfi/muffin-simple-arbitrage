@@ -5,6 +5,7 @@ import time
 import numpy as np
 from pprint import pprint
 from termcolor import cprint
+from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.client import connect
 from muffin_arb.arbitrage import Skip, send_arb
 from muffin_arb.market import Market, MuffinPool, UniV2Pool
@@ -113,5 +114,17 @@ async def subscribe():
             print('Time spent: ', f'{time.time() - start:.4f} sec', '\n')
 
 
+async def subscribe_and_reconnect_on_failed():
+    while True:
+        try:
+            await subscribe()
+        except ConnectionClosedError as e:
+            if e.code == 1006:  # i.e. connection closed abnormally [internal]
+                print(e)
+                print(f'\n\n\nTry to reconnect\n\n\n')
+            else:
+                raise
+
+
 def main():
-    asyncio.run(subscribe())
+    asyncio.run(subscribe_and_reconnect_on_failed())
