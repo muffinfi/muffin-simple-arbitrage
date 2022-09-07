@@ -107,13 +107,13 @@ def send_arb(
     """
     Step 3. Calculate the acceptable gas fee
     """
-    pending_block = w3.eth.get_block('pending')
-    assert 'baseFeePerGas' in pending_block and 'number' in pending_block
+    latest_block = w3.eth.get_block('latest')
+    assert 'baseFeePerGas' in latest_block and 'number' in latest_block
 
     profit_per_gas = amt_net_eth // gas
 
     # mpfps: max_priority_fee_per_gas
-    breakeven_mpfps = profit_per_gas - pending_block['baseFeePerGas']
+    breakeven_mpfps = profit_per_gas - latest_block['baseFeePerGas']
     mpfps = breakeven_mpfps * BRIBE_PERCENTAGE_POST_BASE_FEE // 100
 
     if mpfps <= 0:
@@ -142,7 +142,7 @@ def send_arb(
     """
     Step 5. Send transaction
     """
-    next_block_num = pending_block['number']
+    next_block_num = latest_block['number'] + 1
     bundle = [{"signer": tx_sender, "transaction": tx_params}]  # type: list[Union[FlashbotsBundleTx, FlashbotsBundleRawTx]] # nopep8
 
     try:

@@ -48,14 +48,14 @@ def run_once():
     market_pairs = [(muffin, univ2) for muffin, univ2 in zip(muffin_pools, univ2_pools) if muffin and univ2]
 
     # get current base fee per gas
-    pending_block = w3.eth.get_block('pending')
-    assert 'baseFeePerGas' in pending_block and 'number' in pending_block
+    latest_block = w3.eth.get_block('latest')
+    assert 'baseFeePerGas' in latest_block and 'number' in latest_block
 
     # find all arb opportunities
     results: list[EvaluationResult] = []
     for muffin, univ2 in market_pairs:
         # for every 20 blocks, print all pool prices for records
-        if pending_block['number'] % 20 == 0:
+        if latest_block['number'] % 20 == 0:
             print_pool_prices(muffin, univ2)
 
         # determine input token and bridge token
@@ -71,7 +71,7 @@ def run_once():
                 # todo: determine which tiers to swap to maximize profit
                 m1_kwargs = {'tier_choices': np.full(m1.tier_count, True)} if isinstance(m1, MuffinPool) else {}
                 m2_kwargs = {'tier_choices': np.full(m2.tier_count, True)} if isinstance(m2, MuffinPool) else {}
-                res = evaluate_arb(m1, m2, token_in, token_bridge, m1_kwargs, m2_kwargs, pending_block['baseFeePerGas'])
+                res = evaluate_arb(m1, m2, token_in, token_bridge, m1_kwargs, m2_kwargs, latest_block['baseFeePerGas'])
                 results.append(res)
 
                 cprint(note, on_color='on_magenta')
