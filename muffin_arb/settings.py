@@ -92,6 +92,7 @@ if NETWORK == 'mainnet':
         ETH_ADDRESS,
         USDC_ADDRESS,
         '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',  # WBTC
+        '0xdAC17F958D2ee523a2206206994597C13D831ec7',  # USDT
     ]
 
 elif NETWORK == 'goerli':
