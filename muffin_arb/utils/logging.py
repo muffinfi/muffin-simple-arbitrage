@@ -17,8 +17,8 @@ def print_optim_result_brief(res: EvaluationResult):
     """
     token0, token1 = ((res.token_in, res.token_bridge) if res.token_in.address.lower() < res.token_bridge.address.lower() else
                       (res.token_bridge, res.token_in))
-    market1_class = res.market1.__class__.__name__
-    market2_class = res.market2.__class__.__name__
+    market1_class = str(res.market1)
+    market2_class = str(res.market2)
 
     print(Color.CYELLOW2)
     print(f'pool:           ', f'{token0.symbol} / {token1.symbol}')
@@ -101,8 +101,8 @@ def print_optim_result_detail(res: EvaluationResult, invert_price: Optional[bool
     ###
 
     base, quote = (token1, token0) if invert_price else (token0, token1)
-    market1_class = res.market1.__class__.__name__
-    market2_class = res.market2.__class__.__name__
+    market1_class = str(res.market1)
+    market2_class = str(res.market2)
 
     """
     print path

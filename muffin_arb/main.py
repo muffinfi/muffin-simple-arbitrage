@@ -70,8 +70,7 @@ def run_once():
         # try both directions
         markets: list[tuple[Market, Market]] = [(muffin, univ2), (univ2, muffin)]
         for m1, m2 in markets:
-            _format = lambda mkt: mkt.source['name'] if isinstance(mkt, UniV2Pool) else mkt.__class__.__name__
-            note = f'--{token_in.symbol}--> [{_format(m1):<10}] --{token_bridge.symbol}--> [{_format(m2):<10}]: '
+            note = f'--{token_in.symbol}--> {str(m1):<12} --{token_bridge.symbol}--> {str(m2):<12}: '
 
             try:
                 # evaluate if there's arb opportunity

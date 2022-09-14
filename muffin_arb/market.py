@@ -27,6 +27,9 @@ class Market:
         """
         raise NotImplementedError()
 
+    def __str__(self):
+        return f'<{self.__class__.__name__}>'
+
 
 # ****************************************************************************
 
@@ -155,6 +158,9 @@ class UniV2Pool(Market):
         self.reserve0 = reserve0
         self.reserve1 = reserve1
         self.source = source
+
+    def __str__(self):
+        return f'<{self.source["name"]}>'
 
     def quote(self, token: Token, amt_desired: int, **kwargs) -> int:
         res_in, res_out = (
