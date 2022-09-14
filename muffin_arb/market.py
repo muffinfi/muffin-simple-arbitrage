@@ -8,7 +8,7 @@ from hexbytes import HexBytes
 from multicall import Call, Multicall
 from web3 import Web3
 from muffin_arb.impl import PoolImplInt
-from muffin_arb.settings import HUB_ADDRESS, UNISWAP_V2_FACTORY_ADDRESS, hub_contract, w3
+from muffin_arb.settings import HUB_ADDRESS, UniV2MarketInfo, hub_contract, w3
 from muffin_arb.token import Token
 
 
@@ -123,36 +123,38 @@ class UniV2Pool(Market):
     token1:     Token
     reserve0:   int
     reserve1:   int
+    source:     UniV2MarketInfo
 
     @staticmethod
-    def compute_pool_address(token0_addr: str, token1_addr: str, init_code_hash='96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f') -> str:
+    def compute_pool_address(token0_addr: str, token1_addr: str, source: UniV2MarketInfo) -> str:
         salt = Web3.keccak(encode_abi_packed(['address', 'address'], [token0_addr, token1_addr]))
         encoded = Web3.keccak(encode_abi_packed(
             ['bytes1', 'address', 'bytes32', 'bytes'],
-            [b'\xff', UNISWAP_V2_FACTORY_ADDRESS, salt, bytearray.fromhex(init_code_hash)]
+            [b'\xff', source['factory_address'], salt, bytearray.fromhex(source['init_code_hash'])]
         ))
         return Web3.toChecksumAddress(encoded[12:].hex())
 
     @classmethod
-    def from_pairs(cls, pairs: list[tuple[Token, Token]]) -> list[Optional[UniV2Pool]]:
+    def from_pairs(cls, pairs: list[tuple[Token, Token]], source: UniV2MarketInfo) -> list[Optional[UniV2Pool]]:
         """
         Fetch pool reserves of the given token pairs, then return a list of UniV2Pool
         """
         def to_call(index: int, pair: tuple[Token, Token]):
-            pool_addr = cls.compute_pool_address(pair[0].address, pair[1].address)
-            to_pool = lambda data: cls(pair[0], pair[1], data[0], data[1]) if data else None
+            pool_addr = cls.compute_pool_address(pair[0].address, pair[1].address, source)
+            to_pool = lambda data: cls(pair[0], pair[1], data[0], data[1], source) if data else None
             return Call(pool_addr, ['getReserves()((uint112,uint112,uint32))'], [(index, to_pool)])  # type: ignore
 
         calls = [to_call(i, pair) for i, pair in enumerate(pairs)]
         data = Multicall(calls, _w3=w3)()
         return list(dict(sorted(data.items())).values())
 
-    def __init__(self, token0: Token, token1: Token, reserve0: int, reserve1: int):
-        self.address = self.compute_pool_address(token0.address, token1.address)
+    def __init__(self, token0: Token, token1: Token, reserve0: int, reserve1: int, source: UniV2MarketInfo):
+        self.address = self.compute_pool_address(token0.address, token1.address, source)
         self.token0 = token0
         self.token1 = token1
         self.reserve0 = reserve0
         self.reserve1 = reserve1
+        self.source = source
 
     def quote(self, token: Token, amt_desired: int, **kwargs) -> int:
         res_in, res_out = (

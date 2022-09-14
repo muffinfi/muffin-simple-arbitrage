@@ -2,7 +2,7 @@ import json
 from typing import TypedDict
 from muffin_arb.arbitrage import send_tx_directly
 from muffin_arb.market import UniV2Pool
-from muffin_arb.settings import CMC_PRO_API_KEY, arber_contract, tx_sender
+from muffin_arb.settings import CMC_PRO_API_KEY, UNIV2_MARKETS, arber_contract, tx_sender
 from muffin_arb.token import Token
 from multicall import Signature
 from requests import Session
@@ -44,7 +44,7 @@ def reset_pool_price(args: list[ResetPoolPriceArg]):
         reserve1 = int(arg['amount1_float'] * token1.unit) or 1
         reserve0 = int(arg['amount1_float'] / arg['price'] * token0.unit) or 1
 
-        pool_address = UniV2Pool.compute_pool_address(token0.address, token1.address)
+        pool_address = UniV2Pool.compute_pool_address(token0.address, token1.address, UNIV2_MARKETS[0])
         calldatas.extend([
             (token0.address, 0, Signature('setBalance(address,uint256)()').encode_data((pool_address, reserve0))),
             (token1.address, 0, Signature('setBalance(address,uint256)()').encode_data((pool_address, reserve1))),

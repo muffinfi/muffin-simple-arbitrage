@@ -2,6 +2,7 @@ import json
 import os
 from os import path
 from pathlib import Path
+from typing import TypedDict
 from dotenv import dotenv_values
 from eth_account.account import Account
 from eth_account.signers.local import LocalAccount
@@ -65,18 +66,52 @@ else:
 
 if NETWORK == 'mainnet':
     HUB_ADDRESS = '0x6690384822afF0B65fE0C21a809F187F5c3fcdd8'
-    UNISWAP_V2_FACTORY_ADDRESS = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
     ARBITRAGEUR_ADDRESS = Env.get_env('ARBITRAGEUR_ADDRESS')
 
 elif NETWORK == 'goerli':
     HUB_ADDRESS = '0xA06c455D19704E4871c547211504e17E2199308D'
-    UNISWAP_V2_FACTORY_ADDRESS = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
     ARBITRAGEUR_ADDRESS = Env.get_env('GOERLI_ARBITRAGEUR_ADDRESS')
 
 elif NETWORK == 'rinkeby':
     HUB_ADDRESS = '0x42789c4D6c5Cc9334fef4da662A57D78771Ce9E5'
-    UNISWAP_V2_FACTORY_ADDRESS = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
     ARBITRAGEUR_ADDRESS = Env.get_env('RINKEBY_ARBITRAGEUR_ADDRESS')
+
+else:
+    raise Exception('unknown network')
+
+
+# ---------- external markets ----------
+
+class UniV2MarketInfo(TypedDict):
+    factory_address:    str
+    init_code_hash:     str
+    name:               str
+
+
+if NETWORK == 'mainnet':
+    UNIV2_MARKETS: list[UniV2MarketInfo] = [{
+        'name': 'UniswapV2',
+        'factory_address': '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+        'init_code_hash': '96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f',
+    }, {
+        'name': 'SushiSwap',
+        'factory_address': '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac',
+        'init_code_hash': 'e18a34eb0e04b04f7a0ac29a6e80748dca96319b42c54d679cb821dca90c6303',
+    }]
+
+elif NETWORK == 'goerli':
+    UNIV2_MARKETS: list[UniV2MarketInfo] = [{
+        'name': 'UniswapV2',
+        'factory_address': '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+        'init_code_hash': '96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f',
+    }]
+
+elif NETWORK == 'rinkeby':
+    UNIV2_MARKETS: list[UniV2MarketInfo] = [{
+        'name': 'UniswapV2',
+        'factory_address': '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+        'init_code_hash': '96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f',
+    }]
 
 else:
     raise Exception('unknown network')

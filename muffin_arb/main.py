@@ -10,7 +10,7 @@ from websockets.legacy.client import connect
 from muffin_arb.arbitrage import Skip, send_arb
 from muffin_arb.market import Market, MuffinPool, UniV2Pool
 from muffin_arb.evaluate import EvaluationFailure, EvaluationResult, evaluate_arb
-from muffin_arb.settings import ETH_ADDRESS, TOKEN_ADDRESSES, WEBSOCKET_PROVIDER_URI, w3
+from muffin_arb.settings import ETH_ADDRESS, TOKEN_ADDRESSES, UNIV2_MARKETS, WEBSOCKET_PROVIDER_URI, w3
 from muffin_arb.token import Token
 from muffin_arb.utils.logging import print_optim_result_detail, print_optim_result_brief, print_pool_prices
 
@@ -40,12 +40,17 @@ def run_once():
     # form token pairs with eth
     addr_pairs = get_eth_addr_pairs()
     pairs = [(token_map[addr0], token_map[addr1]) for addr0, addr1 in addr_pairs]
-    # pprint(list(addr_pairs))
 
     # load all pool data
     muffin_pools = MuffinPool.from_pairs(pairs)
-    univ2_pools = UniV2Pool.from_pairs(pairs)
-    market_pairs = [(muffin, univ2) for muffin, univ2 in zip(muffin_pools, univ2_pools) if muffin and univ2]
+    market_pairs: list[tuple[MuffinPool, UniV2Pool]] = []
+    for source in UNIV2_MARKETS:
+        univ2_pools = UniV2Pool.from_pairs(pairs, source)
+        market_pairs.extend([
+            (muffin, univ2)
+            for muffin, univ2 in zip(muffin_pools, univ2_pools)
+            if muffin and univ2
+        ])
 
     # get current base fee per gas
     latest_block = w3.eth.get_block('latest')
@@ -65,7 +70,9 @@ def run_once():
         # try both directions
         markets: list[tuple[Market, Market]] = [(muffin, univ2), (univ2, muffin)]
         for m1, m2 in markets:
-            note = f'ME --{token_in.symbol}--> [{m1.__class__.__name__:<10}] --{token_bridge.symbol}--> [{m2.__class__.__name__:<10}]: '
+            _format = lambda mkt: mkt.source['name'] if isinstance(mkt, UniV2Pool) else mkt.__class__.__name__
+            note = f'--{token_in.symbol}--> [{_format(m1):<10}] --{token_bridge.symbol}--> [{_format(m2):<10}]: '
+
             try:
                 # evaluate if there's arb opportunity
                 # todo: determine which tiers to swap to maximize profit
