@@ -217,7 +217,8 @@ def print_pool_prices(market1: Market, market2: Market):
 
     def append_univ2(mkt: UniV2Pool):
         price = get_univ2_price(mkt, invert_price)
-        rows.append(['UniV2', format_price(price), format_price_diff(price, ref_price), None, None, None, None, None])
+        rows.append([mkt.source['name'] or '<UniV2Pool>', format_price(price),
+                    format_price_diff(price, ref_price), None, None, None, None, None])
 
     def append_muffin(mkt: MuffinPool):
         prices = invert(sqrt_price_x72_to_price_float(mkt.impl.sqrt_prices, token0.unit, token1.unit), invert_price)
