@@ -187,6 +187,15 @@ def format_price_diff(price: float, ref_price: float) -> str:
 
 
 def print_pool_prices(market1: Market, market2: Market):
+    """
+    |                | USDC / WETH   |          | fee   | liquidity   | tick↓   | tick↑   | sqrt price                  |
+    |----------------|---------------|----------|-------|-------------|---------|---------|-----------------------------|
+    | UniswapV2      | 1614.167      | +0.0000% |       |             |         |         |                             |
+    | Muffin tier #0 | 1612.051      | -0.1311% | 5     | 4471.6495   | 202050  | 202975  | 117617041259108581516435497 |
+    | Muffin tier #1 | 1611.245      | -0.1810% | 10    | 170.96071   | 200100  | 203750  | 117646460258500814538952067 |
+    | Muffin tier #2 | 1608.766      | -0.3346% | 20    | 1702.2899   | 201825  | 202550  | 117737078871921264614124408 |
+    """
+
     # determine base and quote tokens
     if isinstance(market1, (MuffinPool, UniV2Pool)):
         token0, token1 = market1.token0, market1.token1
