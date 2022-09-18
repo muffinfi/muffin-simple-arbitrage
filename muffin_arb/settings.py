@@ -158,6 +158,8 @@ else:
 BRIBE_PERCENTAGE_POST_BASE_FEE = int(Env.get_env_nullable('BRIBE_PERCENTAGE_POST_BASE_FEE') or 80)
 CMC_PRO_API_KEY = Env.get_env_nullable('CMC_PRO_API_KEY') or ''
 
+ERROR_LOG_FILE = Env._root_dir / 'error.log'
+
 
 # ---------- construct w3 ----------
 

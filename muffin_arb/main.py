@@ -2,15 +2,15 @@ import asyncio
 import itertools
 import json
 import time
+import traceback
+from datetime import datetime
 import numpy as np
-from pprint import pprint
 from termcolor import cprint
-from websockets.exceptions import ConnectionClosedError
 from websockets.legacy.client import connect
 from muffin_arb.arbitrage import Skip, send_arb
 from muffin_arb.market import Market, MuffinPool, UniV2Pool
 from muffin_arb.evaluate import EvaluationFailure, EvaluationResult, evaluate_arb
-from muffin_arb.settings import ETH_ADDRESS, TOKEN_ADDRESSES, UNIV2_MARKETS, WEBSOCKET_PROVIDER_URI, w3
+from muffin_arb.settings import ETH_ADDRESS, TOKEN_ADDRESSES, UNIV2_MARKETS, WEBSOCKET_PROVIDER_URI, w3, ERROR_LOG_FILE
 from muffin_arb.token import Token
 from muffin_arb.utils.logging import print_optim_result_detail, print_optim_result_brief, print_pool_prices
 
@@ -124,12 +124,13 @@ async def subscribe_and_reconnect_on_failed():
     while True:
         try:
             await subscribe()
-        except ConnectionClosedError as e:
-            if e.code == 1006:  # i.e. connection closed abnormally [internal]
-                print(e)
-                print(f'\n\n\nTry to reconnect\n\n\n')
-            else:
-                raise
+        except Exception as e:
+            print(e)
+            print(f'\n\n\nTry to reconnect\n\n\n')
+            with open(ERROR_LOG_FILE, 'a') as f:
+                f.write('\n\n\n')
+                f.write(datetime.now().replace(microsecond=0).isoformat(' ') + '\n')
+                f.write(traceback.format_exc())
 
 
 def main():
