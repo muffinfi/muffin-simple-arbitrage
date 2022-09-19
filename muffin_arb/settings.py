@@ -202,3 +202,10 @@ with open(path.join(path.dirname(__file__), './artifacts/IUniswapV2Pair.json'), 
         address=None,
         abi=json.load(f)['abi'],
     )
+
+
+with open(path.join(path.dirname(__file__), './artifacts/IERC20.json'), 'r') as f:
+    erc20_interface = w3.eth.contract(
+        address=None,
+        abi=json.load(f)['abi'],
+    )

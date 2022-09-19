@@ -15,7 +15,7 @@ from web3.types import Wei
 from muffin_arb.market import Market, MuffinPool, UniV2Pool
 from muffin_arb.settings import (BRIBE_PERCENTAGE_POST_BASE_FEE, ETH_ADDRESS,
                                  NETWORK, USDC_ADDRESS, USE_FLASH_BOT,
-                                 arber_contract, hub_contract, tx_sender,
+                                 arber_contract, erc20_interface, hub_contract, tx_sender,
                                  univ2_interface, w3, w3_flashbots)
 from muffin_arb.token import Token
 from muffin_arb.utils.logging import pprint_dict
@@ -354,3 +354,22 @@ def univ2_first(
         tx_fee_wei,                 # uint256 txFeeEth,
         hub_swap_calldata           # bytes calldata data
     )
+
+
+# ****************************************************************************
+
+
+def take_token(token=ETH_ADDRESS):
+    """
+    Take ERC20 tokens from Arbitrageur contract back to tx_sender
+    """
+    balance = erc20_interface.functions.balanceOf(arber_contract.address).call({'to': token})
+    print('balance: ', balance)
+
+    if balance > 1:
+        calldata = erc20_interface.encodeABI('transfer', args=[tx_sender.address,  balance - 1])
+        call = arber_contract.functions.multicall(
+            True,
+            [{'target': token, 'value': 0, 'callData': calldata}]
+        )
+        return send_tx_directly(call, tx_sender, wait=True)
