@@ -17,9 +17,9 @@ from muffin_arb.utils.logging import print_optim_result_detail, print_optim_resu
 
 def get_eth_addr_pairs() -> list[tuple[str, str]]:
     """
-    Return a list of (address, address) which involes eth
+    Return a list of (address, address) which either one is weth
     """
-    addr_pairs = list(itertools.product([ETH_ADDRESS], TOKEN_ADDRESSES))
+    addr_pairs = itertools.product([ETH_ADDRESS], TOKEN_ADDRESSES)
     return [
         tuple(sorted([addr0, addr1], key=str.lower))
         for addr0, addr1 in addr_pairs
@@ -29,9 +29,9 @@ def get_eth_addr_pairs() -> list[tuple[str, str]]:
 
 def run_once():
     """
-    1.  Load ETH pairs from muffin and uniswapv2
-    2.  Evaluate if there're arb opportunities and estimate profit
-    3.  Send out the arb with the largest profit
+    1.  Load ETH-token pairs from muffin and other uniswapv2 markets.
+    2.  For each pair, evaluate if there're arb opportunities and estimate profit.
+    3.  Send the arb with the highest estimated profit.
     """
 
     # load tokens
@@ -74,7 +74,7 @@ def run_once():
 
             try:
                 # evaluate if there's arb opportunity
-                # todo: determine which tiers to swap to maximize profit
+                # todo: determine which tiers to use so as to maximize profit. now use all tiers by default.
                 m1_kwargs = {'tier_choices': np.full(m1.tier_count, True)} if isinstance(m1, MuffinPool) else {}
                 m2_kwargs = {'tier_choices': np.full(m2.tier_count, True)} if isinstance(m2, MuffinPool) else {}
                 res = evaluate_arb(m1, m2, token_in, token_bridge, m1_kwargs, m2_kwargs, latest_block['baseFeePerGas'])
@@ -88,10 +88,10 @@ def run_once():
 
     # send the most profitable arb
     if results:
-        print('\n-------------\n')
-        results = sorted(results, key=lambda x: x.profit)
+        results = sorted(results, key=lambda x: x.profit)  # FIXME:
         for res in results:
             try:
+                print('\n----- send arb ------\n')
                 print_optim_result_brief(res)
                 send_arb(**res.__dict__)
                 break
@@ -100,6 +100,9 @@ def run_once():
 
 
 async def subscribe():
+    """
+    Subscribe to new blocks and run arb per block
+    """
     async with connect(WEBSOCKET_PROVIDER_URI, ping_interval=None) as ws:
         await ws.send(json.dumps({"id": 1, "method": "eth_subscribe", "params": ["newHeads"]}))
         await ws.recv()
@@ -127,6 +130,7 @@ async def subscribe_and_reconnect_on_failed():
         except Exception as e:
             print(e)
             print(f'\n\n\nTry to reconnect\n\n\n')
+
             with open(ERROR_LOG_FILE, 'a') as f:
                 f.write('\n\n\n')
                 f.write(datetime.now().replace(microsecond=0).isoformat(' ') + '\n')

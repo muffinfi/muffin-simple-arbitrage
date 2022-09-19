@@ -14,16 +14,20 @@ from muffin_arb.token import Token
 
 class Market:
     """
-    An abstract class for a token exchange market
+    Abstract class for a token exchange market.
+    Please implement the `quote` function when inheriting this class.
     """
 
     def quote(self, token: Token, amt_desired: int, **kwargs) -> int:
         """
+        Quote a swap.
+
         token:          The token that `amt_desired` refers to.
         amt_desired:    The desired change in the token balance of the market.
                         Positive means an input to the market; negative means an output from the market.
 
-        Returns the amount delta of the other token required for the desired token amount change.
+        returns:        The required amount delta of the other token for the desired token amount change.
+                        It'll be a value with an opposite sign of `amt_desired`.
         """
         raise NotImplementedError()
 
@@ -71,7 +75,7 @@ class MuffinPool(Market):
 
         calls = [to_call(i, pair) for i, pair in enumerate(pairs)]
         data = Multicall(calls, _w3=w3)()
-        return list(dict(sorted(data.items())).values())
+        return [v for _, v in sorted(data.items())]
 
     def __init__(
         self,
@@ -99,7 +103,7 @@ class MuffinPool(Market):
 
     def _get_tick_data(self, tier_id: int, tick: int) -> tuple[int, int, int]:
         """
-        Return a tuple of (liquidity_delta, next_tick_below, next_tick_above) of the requested tick
+        Return (liquidity_delta, next_tick_below, next_tick_above) of the requested tick
         """
         cached = self.tick_cache[tier_id][tick]
         if not cached:
@@ -111,6 +115,9 @@ class MuffinPool(Market):
         return cached
 
     def quote(self, token: Token, amt_desired: int, tier_choices: Optional[np.ndarray] = None, **kwargs) -> int:
+        """
+        Quote a swap. Assume using all tiers if not specified.
+        """
         if tier_choices is None:
             tier_choices = np.full(self.tier_count, True)
         res = self.impl.quote(token == self.token0, amt_desired, tier_choices)
@@ -149,7 +156,7 @@ class UniV2Pool(Market):
 
         calls = [to_call(i, pair) for i, pair in enumerate(pairs)]
         data = Multicall(calls, _w3=w3)()
-        return list(dict(sorted(data.items())).values())
+        return [v for _, v in sorted(data.items())]
 
     def __init__(self, token0: Token, token1: Token, reserve0: int, reserve1: int, source: UniV2MarketInfo):
         self.address = self.compute_pool_address(token0.address, token1.address, source)

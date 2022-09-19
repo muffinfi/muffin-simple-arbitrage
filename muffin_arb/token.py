@@ -8,6 +8,9 @@ TOKEN_CACHE: dict[str, Token] = {}
 
 
 def get_tokens(addresses: list[str]) -> dict[str, Token]:
+    """
+    Fetch token info from chain
+    """
     result: dict[str, Token] = {}
 
     new_addrs: list[str] = []
@@ -56,6 +59,9 @@ class Token:
 
     @property
     def unit(self) -> int:
+        """
+        Return the raw amount that represents one unit of the token.
+        """
         return 10**self.decimals
 
     def format_raw_amount(self, amt: int):

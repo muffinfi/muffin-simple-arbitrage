@@ -1,8 +1,10 @@
 import numpy as np
+from muffin_arb.impl.float.math_utils import (MAX_TICK, MIN_TICK,
+                                              calc_tier_amounts_in,
+                                              calc_tier_amounts_out,
+                                              compute_step)
 from numba import prange, types
 from numba.experimental import jitclass
-from muffin_arb.impl.float.math_utils import MAX_TICK, MIN_TICK, calc_tier_amounts_in, calc_tier_amounts_out, compute_step
-
 
 """
 ## How to use?
@@ -46,6 +48,10 @@ pool.quote(True, 10000000, np.array([True, True, True]))
     ('ticks',               types.DictType(types.int64, types.DictType(types.int64, types.UniTuple(types.float64, 3)))),
 ])
 class Pool:
+    """
+    Muffin's swap logic implementation mirrored in python. Float64 version, using numba.jitclass.
+    """
+
     liquiditys:             np.ndarray
     sqrt_prices:            np.ndarray
     sqrt_gammas:            np.ndarray

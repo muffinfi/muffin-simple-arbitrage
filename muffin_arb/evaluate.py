@@ -1,12 +1,16 @@
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
+
 from muffin_arb.market import Market
 from muffin_arb.settings import ETH_ADDRESS, USDC_ADDRESS
 from muffin_arb.token import Token
 
 
 def gen_guess(x0: int, x1: int):
+    """
+    Generator that yields x0 and then a geometric sequence of x1
+    """
     yield x0
     yield x1
     while True:
@@ -14,9 +18,9 @@ def gen_guess(x0: int, x1: int):
         yield x1
 
 
-def maximize(fn, gen: Iterator[int], xatol: int, xrtol: float, fatol: int) -> int:
+def maximize(fn: Callable[[int], int], gen: Iterator[int], xatol: int, xrtol: float, fatol: int) -> int:
     """
-    Returns a `x` that maximizes `fn(x)`, assuming `fn` is a strictly concave function.
+    Returns a value `x` that maximizes `fn(x)`, assuming `fn` is a strictly concave function.
 
     fn:     the objective function
     gen:    generator of the next guesses of x
@@ -24,22 +28,22 @@ def maximize(fn, gen: Iterator[int], xatol: int, xrtol: float, fatol: int) -> in
     xrtol:  relative tolerance of x
     fatol:  absoluate tolerance of fn(x)
     """
-    memo = (next(gen), next(gen))
-    prev_amt_net = 0
+    bounds = (next(gen), next(gen))
+    y_prev = 0
     while True:
-        amt_net = fn(memo[-1])
-        if amt_net > prev_amt_net:
-            memo = (memo[-2], memo[-1], next(gen))
-            prev_amt_net = amt_net
+        y = fn(bounds[-1])
+        if y > y_prev:
+            bounds = (bounds[-2], bounds[-1], next(gen))
+            y_prev = y
         else:
-            mid = (memo[0]+memo[-1])//2
-            end = ((mid-memo[0]) <= xatol or
-                   (mid-memo[0])/mid <= xrtol or
-                   (prev_amt_net-amt_net) <= fatol)
+            mid = (bounds[0]+bounds[-1])//2
+            end = ((mid-bounds[0]) <= xatol or
+                   (mid-bounds[0])/mid <= xrtol or
+                   (y_prev-y) <= fatol)
             if end:
                 return mid
 
-            xs = [memo[0], (memo[0]+mid)//2, mid, (mid+memo[-1])//2, memo[-1]]
+            xs = [bounds[0], (bounds[0]+mid)//2, mid, (mid+bounds[-1])//2, bounds[-1]]
             return maximize(fn, iter(xs), xatol, xrtol, fatol)
 
 
@@ -66,15 +70,16 @@ def evaluate_arb(
 
     @lru_cache(maxsize=None)
     def arbitrage(x: int):
-        assert x > 0
-        amt_a1 = x
-        amt_b = market1.quote(token_in, amt_a1, **market1_kwargs) * -1
-        amt_a2 = market2.quote(token_bridge, amt_b, **market2_kwargs) * -1
-        return (amt_a2-amt_a1, amt_b, amt_a2)
+        assert x >= 0
+        amt_in = x
+        amt_bridge = market1.quote(token_in, amt_in, **market1_kwargs) * -1
+        amt_out = market2.quote(token_bridge, amt_bridge, **market2_kwargs) * -1
+        return (amt_out-amt_in, amt_bridge, amt_out)
 
     """
     Step 1. Test if there is arb opportunity.
     """
+    # test with an amount of 0.0001 tokens or 1000 base units
     test_amt_in = max(token_in.unit // 10**4, 1000)
     test_amt_net = arbitrage(test_amt_in)[0]
     if test_amt_net <= 0:
@@ -89,11 +94,14 @@ def evaluate_arb(
 
     """
     Step 3. Guesstimate a gas cost.
+
     We'll `eth_estimateGas` and calculate fee more precisely later on, but here we still want to roughly estimate gas
-    to reject any seemingly non-profitable arbs, so we don't waste time handling them later on.
+    to reject any seemingly non-profitable arbs, such that we don't waste time handling them later on.
     """
-    GAS_PER_ARB = 190_000
+    GAS_PER_ARB = 190_000  # rough guess
     gas_cost_wei = GAS_PER_ARB * gas_price
+
+    # convert gas cost to the unit of the input token
     if token_in.address == ETH_ADDRESS:
         gas_cost = gas_cost_wei
     elif token_in.address == USDC_ADDRESS:

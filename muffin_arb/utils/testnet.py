@@ -18,7 +18,7 @@ ResetPoolPriceArg = TypedDict('ResetPoolPriceArg', {
 
 def reset_pool_price(args: list[ResetPoolPriceArg]):
     """
-    Reset a UniV2Pool price, for testing only.
+    Reset a UniV2Pool price, for internal testing only.
 
     To use it, please deploy your own test tokens with the function "setBalance(address account, uint256 balance)",
     and create a pool manually on univ2 on testnet.

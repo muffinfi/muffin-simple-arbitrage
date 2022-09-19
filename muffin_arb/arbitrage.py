@@ -1,4 +1,3 @@
-from pprint import pprint
 from typing import Any, Union
 
 import numpy as np
@@ -19,7 +18,7 @@ from muffin_arb.settings import (BRIBE_PERCENTAGE_POST_BASE_FEE, ETH_ADDRESS,
                                  arber_contract, hub_contract, tx_sender,
                                  univ2_interface, w3, w3_flashbots)
 from muffin_arb.token import Token
-from muffin_arb.utils.logging import omit, pprint_attr_dict
+from muffin_arb.utils.logging import pprint_dict
 
 
 class Skip(Exception):
@@ -39,7 +38,8 @@ def send_arb(
     **kwargs
 ):
     """
-    Send an arb transaction.
+    Construct and send an arb transaction.
+    You may want to `evaluate_arb` first before calling this function.
 
     market1:            The first market we go to swap
     market2:            The next market which we swap using the output from the first market
@@ -53,18 +53,12 @@ def send_arb(
     """
 
     """
-    Step 1. Prepare call
+    Step 1. Prepare calldata
     """
     amt_net = amt_out - amt_in
-    if token_in.address == ETH_ADDRESS:
-        amt_net_eth = amt_net
-    elif token_in.address == USDC_ADDRESS:
-        amt_net_eth = amt_net * 10**18 // (1000 * 10**6)  # treat 1 eth -> 1000 USDC
-    else:
-        raise NotImplementedError()
 
     if isinstance(market1, MuffinPool) and isinstance(market2, UniV2Pool):
-        prepared_fn = muffin_first(
+        arb_call = muffin_first(
             token_in_address=token_in.address,
             token_bridge_address=token_bridge.address,
             amt_in=amt_in,
@@ -75,7 +69,7 @@ def send_arb(
             tx_fee_wei=0,  # we pay miner by maxPriorityFeePerGas
         )
     elif isinstance(market1, UniV2Pool) and isinstance(market2, MuffinPool):
-        prepared_fn = univ2_first(
+        arb_call = univ2_first(
             token_in_address=token_in.address,
             token_bridge_address=token_bridge.address,
             amt_in=amt_in,
@@ -89,14 +83,14 @@ def send_arb(
         raise NotImplementedError(f'unknown market pair: {market1.__class__}, {market2.__class__}')
 
     if NETWORK == 'rinkeby' or not USE_FLASH_BOT:
-        send_tx_directly(prepared_fn, tx_sender, wait=True)
+        send_tx_directly(arb_call, tx_sender, wait=True)
         return
 
     """
     Step 2. Estimate gas needed for the arb
     """
     try:
-        gas = prepared_fn.estimateGas({'from': tx_sender.address})
+        gas = arb_call.estimateGas({'from': tx_sender.address})
         print('Estimated gas: ', gas)
     except Exception as e:
         raise Skip(f'Failed to estimate gas: {e}')
@@ -105,38 +99,47 @@ def send_arb(
         raise Skip("pretty sus gas")
 
     """
-    Step 3. Calculate the acceptable gas fee
+    Step 3. Calculate the acceptable gas fee.
     """
     latest_block = w3.eth.get_block('latest')
     assert 'baseFeePerGas' in latest_block and 'number' in latest_block
 
+    # convert the net token amounts to eth
+    if token_in.address == ETH_ADDRESS:
+        amt_net_eth = amt_net
+    elif token_in.address == USDC_ADDRESS:
+        amt_net_eth = amt_net * 10**18 // (1000 * 10**6)  # treat 1 eth -> 1000 USDC
+    else:
+        raise NotImplementedError()
+
     profit_per_gas = amt_net_eth // gas
 
-    # mpfps: max_priority_fee_per_gas
-    breakeven_mpfps = profit_per_gas - latest_block['baseFeePerGas']
-    mpfps = breakeven_mpfps * BRIBE_PERCENTAGE_POST_BASE_FEE // 100
+    # `mpf` means "max priority fee per gas" here
+    breakeven_mpf = profit_per_gas - latest_block['baseFeePerGas']
+    mpf = breakeven_mpf * BRIBE_PERCENTAGE_POST_BASE_FEE // 100
 
-    if mpfps <= 0:
+    # skip if our maxPriorityFeePerGas is not reasonable
+    if mpf <= 0:
         raise Skip('Not profitable')
-    if mpfps <= w3.eth.max_priority_fee:
-        raise Skip(f'Max priority fee probably not enough: {mpfps}, {w3.eth.max_priority_fee}')
+    if mpf <= w3.eth.max_priority_fee:
+        raise Skip(f'Max priority fee probably not enough: {mpf}, {w3.eth.max_priority_fee}')
 
     if NETWORK == 'goerli':
         # override setting for testnet
-        mpfps = min(mpfps, w3.eth.max_priority_fee * 200 // 100)
+        mpf = min(mpf, w3.eth.max_priority_fee * 200 // 100)
 
     """
     Step 4. Build transaction
     """
-    tx_params = prepared_fn.buildTransaction({
+    tx_params = arb_call.buildTransaction({
         'from': tx_sender.address,
         'nonce': w3.eth.get_transaction_count(tx_sender.address),
         'type': 2,
         'maxFeePerGas': Wei(profit_per_gas),
-        'maxPriorityFeePerGas': Wei(mpfps),
+        'maxPriorityFeePerGas': Wei(mpf),
         'gas': Wei(gas),
     })
-    pprint(omit(tx_params, keys=['data']))
+    pprint_dict(tx_params, omit_keys=['data'])
     print()
 
     """
@@ -148,7 +151,7 @@ def send_arb(
     try:
         simulation = w3_flashbots.simulate(bundle, next_block_num)
         print('Simulation success:')
-        pprint_attr_dict(simulation, omit_keys=['signedBundledTransactions'])
+        pprint_dict(simulation, omit_keys=['signedBundledTransactions'])
         print()
     except Exception as e:
         print(e.response.content if isinstance(e, RequestException) else e)
@@ -159,12 +162,13 @@ def send_arb(
         w3_flashbots.send_bundle(bundle, target_block_number=next_block_num + i)  # type: ignore
         for i in range(retry_times)
     ]
+
     for i, resp in enumerate(responses):
         try:
             resp.wait()
             receipts = resp.receipts()
             cprint(f"Bundle was mined in block {next_block_num + i}", on_color='on_green')
-            pprint_attr_dict(receipts)
+            pprint_dict(receipts)
             print('\n\n\n\n\n\n\n')
             return
         except Exception as e:
@@ -172,15 +176,15 @@ def send_arb(
             cprint(f"Bundle not found in block {next_block_num + i}", on_color='on_red')
             print()
             if i == 0:
-                bundle_states = w3_flashbots.get_bundle_stats(simulation['bundleHash'], resp.target_block_number)  # type: ignore # nopep8
-                print('bundle_states:   ', bundle_states, '\n')
+                bundle_stats = w3_flashbots.get_bundle_stats(simulation['bundleHash'], resp.target_block_number)  # type: ignore # nopep8
+                print('bundle_stats:    ', bundle_stats, '\n')
                 # user_stats = w3_flashbots.get_user_stats()  # type: ignore
                 # print('user_stats:      ', user_stats, '\n')
 
 
 def tier_choices_arr_to_mask(tier_choices_arr: np.ndarray) -> int:
     """
-    Turn a numpy array of boolean to bit mask, e.g. np.array([False, False, True]) -> 0b100
+    Convert a numpy array of boolean to bit mask, e.g. np.array([False, False, True]) -> 0b100
     """
     return int(np.sum((1 << np.arange(0, len(tier_choices_arr)))[tier_choices_arr]))
 
@@ -221,24 +225,32 @@ def muffin_first(
     tx_fee_wei: int
 ) -> ContractFunction:
     """
-    Prepare arb calldata with the token flow "Arber -> Muffin -> UniV2 -> Arber".
+    Prepare calldata for an arb with the token flow "Arbitrageur -> Muffin -> UniV2 -> Arbitrageur".
     """
+
     """
     . Note:
-    . - "A ─ ─ ─ ─ ─ ─ ─ ▶ B" means "A calls B"
-    . - "A ───token_in───▶ B" means "A transfers the input token to B"
-    . - The number on the path (e.g. ───1──▶) means the order
+    . - The dashed path (e.g. "A ─ ─ ─ ─ ─ ─ ─ ▶ B") means "A calls B"
+    . - The solid path  (e.g. "A ─────token────▶ B") means "A transfers `token` to B"
+    . - The number on the path (e.g. ───1───▶) means the order in which it happens
     .
-    .               ┌──2──────────────token_bridge──────────────────┐
-    .               │                                               ▼
-    .           ┌──────┐                                         ┌─────┐
-    . EOA ─ 1 ─▶│Muffin│─ ─ ─ ─ 3 ─ ─ ─ ─ ┐  ┌ ─ ─ ─ ─ 4 ─ ─ ─ ▶ │UniV2│
-    .           └──────┘                  ▼  |                   └─────┘
-    .               ▲                  ┌────────┐                   │
-    .               └───token_in───6───│ Arber  │◀────token_in────5─┘
-    .                                  └────────┘
+    .     ┌──1──────────────token_bridge──────────────────┐
+    .     │                                               ▼
+    . ┌──────┐                                         ┌─────┐
+    . │Muffin│─ ─ ─ ─ 2 ─ ─ ─ ─ ┐  ┌ ─ ─ ─ ─ 3 ─ ─ ─ ▶ │UniV2│
+    . └──────┘                  ▼  |                   └─────┘
+    .     ▲                  ┌────────┐                   │
+    .     └───token_in───5───│ Arber  │◀────token_in────4─┘
+    .                        └────────┘
     .
-    . Profit = (received `token_in` on path #5) - (sent `token_in` on path #6)
+    . Explanation:
+    . 0. Arbitrageur calls Muffin's `swap` with the recipient set to UniV2.
+    . 1. Muffin sends output tokens to UniV2, and now Arbitrageur owes Muffin's input tokens to finish the swap.
+    . 2. Muffin calls Arbitrageur's `muffinSwapCallback`.
+    . 3. In the callback, Arbitrageur calls `swap` on UniV2.
+    . 4. UniV2 sends an output to Arbitrageur. Note that UniV2 already received an input on #1.
+    . 5. Arbitrageur uses a part of the output from UniV2 to pay Muffin.
+    .    Hence, profit = (`token_in` received on path #4) - (`token_in` sent on path #5)
     """
 
     univ2_amt0_out, univ2_amt1_out = (
@@ -251,7 +263,7 @@ def muffin_first(
         arber_contract.address,     # address to
         b'',                        # bytes calldata data
     ])
-    inner_data = encode_abi(
+    muffin_callback_data = encode_abi(
         ['address', 'bytes', 'uint256'],
         [univ2_pool_address, decode_hex(univ2_swap_calldata), 0]
     )
@@ -261,9 +273,9 @@ def muffin_first(
         tier_choices,               # uint256 tierChoices
         amt_in,                     # int256 amountDesired
         univ2_pool_address,         # address recipient
-        0,                          # uint256 recipientAccRefId
-        0,                          # uint256 senderAccRefId
-        inner_data,                 # bytes calldata data
+        0,                          # uint256 recipientAccRefId (0 means not sending from caller's internal account)
+        0,                          # uint256 senderAccRefId    (0 means not sending to recipient's internal account)
+        muffin_callback_data,       # bytes calldata data
     ])
     return arber_contract.functions.work(
         token_in_address,           # address tokenIn,
@@ -284,24 +296,32 @@ def univ2_first(
     tx_fee_wei: int
 ) -> ContractFunction:
     """
-    Prepare arb calldata with the token flow "Arber -> UniV2 -> Muffin -> Arber".
+    Prepare calldata for an arb with the token flow "Arbitrageur -> UniV2 -> Muffin -> Arbitrageur".
     """
+
     """
     . Note:
-    . - "A ─ ─ ─ ─ ─ ─ ─ ▶ B" means "A calls B"
-    . - "A ───token_in───▶ B" means "A transfers the input token to B"
-    . - The number on the path (e.g. ───1──▶) means the order
+    . - The dashed path (e.g. "A ─ ─ ─ ─ ─ ─ ─ ▶ B") means "A calls B"
+    . - The solid path  (e.g. "A ─────token────▶ B") means "A transfers `token` to B"
+    . - The number on the path (e.g. ───1───▶) means the order in which it happens
     .
-    .               ┌─────────────────token_bridge──────────────6───┐
-    .               ▼                                               │
-    .           ┌──────┐                                         ┌─────┐
-    . EOA ─ 1 ─▶│Muffin│─ ─ ─ ─ 3 ─ ─ ─ ─ ┐  ┌ ─ ─ ─ ─ 5 ─ ─ ─ ▶ │UniV2│
-    .           └──────┘                  ▼  |                   └─────┘
-    .               │                  ┌────────┐                   ▲
-    .               └─2────token_in───▶│ Arber  │───4───token_in────┘
-    .                                  └────────┘
+    .     ┌─────────────────token_bridge──────────────5───┐
+    .     ▼                                               │
+    . ┌──────┐                                         ┌─────┐
+    . │Muffin│─ ─ ─ ─ 2 ─ ─ ─ ─ ┐  ┌ ─ ─ ─ ─ 4 ─ ─ ─ ▶ │UniV2│
+    . └──────┘                  ▼  |                   └─────┘
+    .     │                  ┌────────┐                   ▲
+    .     └─1────token_in───▶│ Arber  │───3───token_in────┘
+    .                        └────────┘
     .
-    . Profit = (received `token_in` on path #2) - (sent `token_in` on path #4)
+    . Explanation:
+    . 0. Arbitrageur calls Muffin's `swap` with the recipient set to Arbitrageur itself.
+    . 1. Muffin sends output tokens to Arbitrageur, and now Arbitrageur owes Muffin's input tokens to finish the swap.
+    . 2. Muffin calls Arbitrageur's `muffinSwapCallback`.
+    . 3. In the callback, Arbitrageur sends a part of the output from Muffin to UniV2.
+    . 4. Arbitrageur calls `swap` on UniV2 with the recipient set to Muffin.
+    . 5. UniV2 sends an output to Muffin. This completes the initial swap on Muffin
+    .    Hence, profit = (`token_in` received on path #1) - (`token_in` sent on path #3)
     """
 
     univ2_amt0_out, univ2_amt1_out = (
@@ -314,7 +334,7 @@ def univ2_first(
         hub_contract.address,       # address to
         b'',                        # bytes calldata data
     ])
-    inner_data = encode_abi(
+    muffin_callback_data = encode_abi(
         ['address', 'bytes', 'uint256'],
         [univ2_pool_address, decode_hex(univ2_swap_calldata), amt_in]
     )
@@ -324,9 +344,9 @@ def univ2_first(
         tier_choices,               # uint256 tierChoices
         amt_bridge,                 # int256 amountDesired
         arber_contract.address,     # address recipient
-        0,                          # uint256 recipientAccRefId
-        0,                          # uint256 senderAccRefId
-        inner_data,                 # bytes calldata data
+        0,                          # uint256 recipientAccRefId (0 means not sending from caller's internal account)
+        0,                          # uint256 senderAccRefId    (0 means not sending to recipient's internal account)
+        muffin_callback_data,       # bytes calldata data
     ])
     return arber_contract.functions.work(
         token_in_address,           # address tokenIn,

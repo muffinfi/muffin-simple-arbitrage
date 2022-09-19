@@ -159,19 +159,16 @@ def tier_choices_arr_to_mask(tier_choices_arr: np.ndarray) -> int:
 
 # -----
 
-def pprint_attr_dict(x, omit_keys: list[Any] = []):
-    def parse_attr_dict(x, _omit_keys=[]):
+
+def pprint_dict(x, omit_keys: list[Any] = []):
+    def _serialize(x, _omit_keys=[]):
         if isinstance(x, (AttributeDict, dict)):
-            return {k: parse_attr_dict(v) for k, v in x.items() if k not in _omit_keys}
+            return {k: _serialize(v) for k, v in x.items() if k not in _omit_keys}
         if isinstance(x, list):
-            return [parse_attr_dict(v) for v in x]
+            return [_serialize(v) for v in x]
         return x
 
-    pprint(parse_attr_dict(x, omit_keys))
-
-
-def omit(x: Union[dict, TypedDict], keys: list[Any] = []):
-    return {k: v for k, v in x.items() if k not in keys}
+    pprint(_serialize(x, omit_keys))
 
 
 # -----

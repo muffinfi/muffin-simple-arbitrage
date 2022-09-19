@@ -1,19 +1,23 @@
 from typing import Callable
+
 import numpy as np
-from muffin_arb.impl.float.math_utils import MAX_TICK, MIN_TICK, calc_tier_amounts_in, calc_tier_amounts_out, compute_step
-
-
-# GetTickData :: (tier_id, tick_index) -> (liquidity_delta, next_below, next_above)
-GetTickData = Callable[[int, int], tuple[float, int, int]]
+from muffin_arb.impl.float.math_utils import (MAX_TICK, MIN_TICK,
+                                              calc_tier_amounts_in,
+                                              calc_tier_amounts_out,
+                                              compute_step)
 
 
 class Pool:
+    """
+    Muffin's swap logic implementation mirrored in python. Float64 version.
+    """
+
     liquiditys:             np.ndarray
     sqrt_prices:            np.ndarray
     sqrt_gammas:            np.ndarray
     next_ticks_below:       np.ndarray
     next_ticks_above:       np.ndarray
-    get_tick_data:          GetTickData
+    get_tick_data:          Callable[[int, int], tuple[float, int, int]]  # (tier_id, tick_index) -> (liquidity_delta, next_below, next_above) # nopep8
 
     def __init__(
         self,
@@ -22,7 +26,7 @@ class Pool:
         sqrt_gammas: np.ndarray,
         next_ticks_below: np.ndarray,
         next_ticks_above: np.ndarray,
-        get_tick_data: GetTickData,
+        get_tick_data: Callable[[int, int], tuple[float, int, int]],
     ):
         # Recreate arrays to ensure correct type and prevent changing the source
         self.liquiditys = np.array(liquiditys, dtype=np.float_)

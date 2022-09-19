@@ -85,7 +85,7 @@ else:
 class UniV2MarketInfo(TypedDict):
     factory_address:    str
     init_code_hash:     str
-    name:               str
+    name:               str  # used for logging
 
 
 if NETWORK == 'mainnet':
