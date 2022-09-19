@@ -72,16 +72,18 @@ contract Arbitrageur4 is Multicall {
 
         // "amtToUni==0" means muffin first
         if (amtToUni == 0) {
-            // step1: muffin -> univ2   (owe muffin)
-            // step2: univ2  -> here    (owe muffin)
-            // step3: here   -> muffin
+            // token transfer flow:
+            // 1. muffin -> univ2   (owe muffin)
+            // 2. univ2  -> here    (owe muffin)
+            // 3. here   -> muffin
             (bool success, bytes memory ret) = uniV2Pool.call(data2);
             _require(success, ret);
             IERC20(tokenToMfn).transfer(msg.sender, amtToMfn); // send token to hub
         } else {
-            // step1: muffin -> here    (owe muffin)
-            // step2: here   -> univ2   (owe muffin)
-            // step3: univ2  -> muffin
+            // token transfer flow:
+            // 1. muffin -> here    (owe muffin)
+            // 2. here   -> univ2   (owe muffin)
+            // 3. univ2  -> muffin
             IERC20(tokenFromMfn).transfer(uniV2Pool, amtToUni);
             (bool success, bytes memory ret) = uniV2Pool.call(data2);
             _require(success, ret);
