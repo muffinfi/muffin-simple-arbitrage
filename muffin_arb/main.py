@@ -88,7 +88,7 @@ def run_once():
 
     # send the most profitable arb
     if results:
-        results = sorted(results, key=lambda x: x.profit)  # FIXME:
+        results = sorted(results, key=lambda x: -x.profit)
         for res in results:
             try:
                 print('\n----- send arb ------\n')
